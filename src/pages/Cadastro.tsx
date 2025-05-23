@@ -1,12 +1,14 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, User, Mail, Lock, Phone } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Cadastro = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
@@ -15,6 +17,9 @@ const Cadastro = () => {
     confirmPassword: "",
     termos: false
   });
+  
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -24,19 +29,103 @@ const Cadastro = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateForm = () => {
+    if (!formData.nome.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Erro de validação",
+        description: "Nome completo é obrigatório"
+      });
+      return false;
+    }
+
+    if (!formData.email.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Erro de validação",
+        description: "E-mail é obrigatório"
+      });
+      return false;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      toast({
+        variant: "destructive",
+        title: "Erro de validação",
+        description: "Por favor, insira um e-mail válido"
+      });
+      return false;
+    }
+
+    if (formData.password.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Erro de validação",
+        description: "A senha deve ter pelo menos 6 caracteres"
+      });
+      return false;
+    }
+
     if (formData.password !== formData.confirmPassword) {
-      alert("As senhas não coincidem!");
-      return;
+      toast({
+        variant: "destructive",
+        title: "Erro de validação",
+        description: "As senhas não coincidem"
+      });
+      return false;
     }
+
     if (!formData.termos) {
-      alert("Você deve aceitar os termos de uso!");
+      toast({
+        variant: "destructive",
+        title: "Erro de validação",
+        description: "Você deve aceitar os termos de uso"
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
       return;
     }
-    // Aqui implementaria o cadastro
-    console.log("Cadastro:", formData);
-    // Redirecionar para página de upload de documentos
+
+    setIsLoading(true);
+
+    try {
+      // Simular criação de conta (aqui seria integrado com Supabase)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Salvar dados básicos no localStorage temporariamente
+      localStorage.setItem('userData', JSON.stringify({
+        nome: formData.nome,
+        email: formData.email,
+        telefone: formData.telefone,
+        isLoggedIn: true,
+        needsDocumentUpload: true
+      }));
+
+      toast({
+        title: "Conta criada com sucesso!",
+        description: "Agora você precisa enviar seus documentos para análise."
+      });
+
+      // Redirecionar para upload de documentos
+      navigate('/dashboard');
+      
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao criar conta",
+        description: "Tente novamente em alguns instantes"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -187,8 +276,8 @@ const Cadastro = () => {
               </label>
             </div>
 
-            <Button type="submit" className="w-full">
-              Criar Conta
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Criando conta..." : "Criar Conta"}
             </Button>
           </form>
 
