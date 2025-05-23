@@ -1,15 +1,20 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: ""
   });
+
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -19,11 +24,78 @@ const Login = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateForm = () => {
+    if (!formData.email.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Erro de validação",
+        description: "E-mail é obrigatório"
+      });
+      return false;
+    }
+
+    if (!formData.password.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Erro de validação",
+        description: "Senha é obrigatória"
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Aqui implementaria a autenticação
-    console.log("Login attempt:", formData);
-    // Redirecionar para dashboard após login bem-sucedido
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Simular autenticação (aqui seria integrado com Supabase)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Verificar se existe usuário cadastrado no localStorage
+      const userData = localStorage.getItem('userData');
+      
+      if (userData) {
+        const user = JSON.parse(userData);
+        
+        // Simular verificação de credenciais (em produção seria verificado no backend)
+        if (user.email === formData.email) {
+          // Atualizar status de login
+          localStorage.setItem('userData', JSON.stringify({
+            ...user,
+            isLoggedIn: true
+          }));
+
+          toast({
+            title: "Login realizado com sucesso!",
+            description: `Bem-vindo de volta, ${user.nome.split(' ')[0]}!`
+          });
+
+          // Redirecionar para dashboard
+          navigate('/dashboard');
+        } else {
+          throw new Error('Credenciais inválidas');
+        }
+      } else {
+        throw new Error('Usuário não encontrado');
+      }
+      
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao fazer login",
+        description: "E-mail ou senha incorretos"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -101,8 +173,8 @@ const Login = () => {
               </Link>
             </div>
 
-            <Button type="submit" className="w-full">
-              Entrar
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Entrando..." : "Entrar"}
             </Button>
           </form>
 

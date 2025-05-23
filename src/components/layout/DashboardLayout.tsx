@@ -14,6 +14,7 @@ import {
   Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   const menuItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
@@ -36,8 +38,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   };
 
   const handleLogout = () => {
-    // Implementar logout
-    console.log("Logout");
+    logout();
   };
 
   return (
@@ -76,14 +77,18 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           {/* User section */}
           <div className="border-t border-gray-200 p-4">
             <div className="flex items-center">
-              <img
-                className="w-10 h-10 rounded-full"
-                src="/placeholder.svg"
-                alt="Usuário"
-              />
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+                <span className="text-white font-semibold">
+                  {user?.nome?.charAt(0).toUpperCase() || 'U'}
+                </span>
+              </div>
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700">João Silva</p>
-                <p className="text-xs text-gray-500">joao@email.com</p>
+                <p className="text-sm font-medium text-gray-700">
+                  {user?.nome || 'Usuário'}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {user?.email || 'email@exemplo.com'}
+                </p>
               </div>
             </div>
             <div className="mt-3 flex space-x-2">
@@ -165,6 +170,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <Button variant="outline" size="sm">
                 <Bell className="w-4 h-4 mr-2" />
                 Notificações
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sair
               </Button>
             </div>
           </div>

@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, User, Mail, Lock, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const Cadastro = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -20,6 +20,7 @@ const Cadastro = () => {
   
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -100,21 +101,24 @@ const Cadastro = () => {
       // Simular criação de conta (aqui seria integrado com Supabase)
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Salvar dados básicos no localStorage temporariamente
-      localStorage.setItem('userData', JSON.stringify({
+      // Criar objeto do usuário
+      const userData = {
         nome: formData.nome,
         email: formData.email,
         telefone: formData.telefone,
         isLoggedIn: true,
         needsDocumentUpload: true
-      }));
+      };
+
+      // Fazer login automaticamente após cadastro
+      login(userData);
 
       toast({
         title: "Conta criada com sucesso!",
         description: "Agora você precisa enviar seus documentos para análise."
       });
 
-      // Redirecionar para upload de documentos
+      // Redirecionar para dashboard
       navigate('/dashboard');
       
     } catch (error) {
