@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -10,11 +9,11 @@ import {
   LogOut, 
   Menu, 
   X,
-  Bell,
   Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import NotificationDropdown from "@/components/dashboard/NotificationDropdown";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -167,10 +166,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </button>
             
             <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm">
-                <Bell className="w-4 h-4 mr-2" />
-                Notificações
-              </Button>
+              <NotificationDropdown />
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Sair

@@ -1,4 +1,3 @@
-
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,11 +7,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { User, Mail, Phone, MapPin, Calendar, Edit, Save, X } from "lucide-react";
+import PhotoUpload from "@/components/dashboard/PhotoUpload";
 
 const Perfil = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     nome: user?.nome || "João Silva",
     email: user?.email || "joao.silva@email.com",
@@ -33,13 +34,17 @@ const Perfil = () => {
     }));
   };
 
-  const handleSave = () => {
-    // Aqui você salvaria os dados no backend
+  const handleSave = async () => {
+    setIsSaving(true);
+    // Simular salvamento
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
     toast({
       title: "Perfil atualizado!",
       description: "Suas informações foram salvas com sucesso.",
     });
     setIsEditing(false);
+    setIsSaving(false);
   };
 
   const handleCancel = () => {
@@ -59,6 +64,10 @@ const Perfil = () => {
     setIsEditing(false);
   };
 
+  const handlePhotoChange = (file: File) => {
+    console.log('Nova foto selecionada:', file.name);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -76,13 +85,17 @@ const Perfil = () => {
               </Button>
             ) : (
               <>
-                <Button variant="outline" onClick={handleCancel}>
+                <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
                   <X className="w-4 h-4 mr-2" />
                   Cancelar
                 </Button>
-                <Button onClick={handleSave}>
-                  <Save className="w-4 h-4 mr-2" />
-                  Salvar
+                <Button onClick={handleSave} disabled={isSaving}>
+                  {isSaving ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  {isSaving ? 'Salvando...' : 'Salvar'}
                 </Button>
               </>
             )}
@@ -96,16 +109,15 @@ const Perfil = () => {
               <CardTitle>Foto do Perfil</CardTitle>
             </CardHeader>
             <CardContent className="text-center">
-              <div className="w-32 h-32 rounded-full bg-primary flex items-center justify-center mx-auto mb-4">
-                <span className="text-4xl font-bold text-white">
-                  {formData.nome.charAt(0).toUpperCase()}
-                </span>
+              <PhotoUpload
+                userName={formData.nome}
+                onPhotoChange={handlePhotoChange}
+                disabled={!isEditing}
+              />
+              <div className="mt-4">
+                <h3 className="text-xl font-semibold text-gray-900">{formData.nome}</h3>
+                <p className="text-gray-600">{formData.email}</p>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900">{formData.nome}</h3>
-              <p className="text-gray-600">{formData.email}</p>
-              <Button variant="outline" className="mt-4" disabled={!isEditing}>
-                Alterar Foto
-              </Button>
             </CardContent>
           </Card>
 
