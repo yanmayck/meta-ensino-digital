@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +16,11 @@ import Contato from "./pages/Contato";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
 import Dashboard from "./pages/dashboard/Dashboard";
+import Cursos from "./pages/dashboard/Cursos";
+import Notas from "./pages/dashboard/Notas";
+import Pagamentos from "./pages/dashboard/Pagamentos";
+import Perfil from "./pages/dashboard/Perfil";
+import Configuracoes from "./pages/dashboard/Configuracoes";
 import NotFound from "./pages/NotFound";
 import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
@@ -50,31 +56,31 @@ const App = () => (
             } />
             <Route path="/dashboard/cursos" element={
               <ProtectedRoute>
-                <NotFound />
+                <Cursos />
               </ProtectedRoute>
             } />
             <Route path="/dashboard/notas" element={
               <ProtectedRoute>
-                <NotFound />
+                <Notas />
               </ProtectedRoute>
             } />
             <Route path="/dashboard/pagamentos" element={
               <ProtectedRoute>
-                <NotFound />
+                <Pagamentos />
               </ProtectedRoute>
             } />
             <Route path="/dashboard/perfil" element={
               <ProtectedRoute>
-                <NotFound />
+                <Perfil />
               </ProtectedRoute>
             } />
             <Route path="/dashboard/configuracoes" element={
               <ProtectedRoute>
-                <NotFound />
+                <Configuracoes />
               </ProtectedRoute>
             } />
             
-            {/* Legal pages - placeholder for now */}
+            {/* Legal pages */}
             <Route path="/termos" element={<Termos />} />
             <Route path="/privacidade" element={<Privacidade />} />
             <Route path="/cookies" element={<Cookies />} />
