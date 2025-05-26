@@ -1,10 +1,7 @@
-
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-
 const CallToAction = () => {
-  return (
-    <section className="bg-meta-700 py-16">
+  return <section className="bg-meta-700 py-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="lg:flex lg:items-center lg:justify-between">
           <div className="max-w-xl">
@@ -24,7 +21,7 @@ const CallToAction = () => {
               </div>
               <div className="ml-3 inline-flex">
                 <Link to="/contato">
-                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-meta-600">
+                  <Button size="lg" variant="outline" className="border-white text-white bg-slate-950 hover:bg-slate-800">
                     Fale Conosco
                   </Button>
                 </Link>
@@ -82,8 +79,6 @@ const CallToAction = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default CallToAction;
