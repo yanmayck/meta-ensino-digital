@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +16,11 @@ import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
 import Dashboard from "./pages/dashboard/Dashboard";
 import NotFound from "./pages/NotFound";
+import Termos from "./pages/Termos";
+import Privacidade from "./pages/Privacidade";
+import Cookies from "./pages/Cookies";
+import Credenciamento from "./pages/Credenciamento";
+import EsqueciSenha from "./pages/EsqueciSenha";
 
 const queryClient = new QueryClient();
 
@@ -71,11 +75,11 @@ const App = () => (
             } />
             
             {/* Legal pages - placeholder for now */}
-            <Route path="/termos" element={<NotFound />} />
-            <Route path="/privacidade" element={<NotFound />} />
-            <Route path="/cookies" element={<NotFound />} />
-            <Route path="/credenciamento" element={<NotFound />} />
-            <Route path="/esqueci-senha" element={<NotFound />} />
+            <Route path="/termos" element={<Termos />} />
+            <Route path="/privacidade" element={<Privacidade />} />
+            <Route path="/cookies" element={<Cookies />} />
+            <Route path="/credenciamento" element={<Credenciamento />} />
+            <Route path="/esqueci-senha" element={<EsqueciSenha />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
