@@ -35,8 +35,15 @@ const UserManagement = () => {
 
       if (error) throw error;
       
-      setUsers(data || []);
-      setFilteredUsers(data || []);
+      const typedUsers = (data || []).map(user => ({
+        id: user.id,
+        email: user.email,
+        role: user.role as 'user' | 'admin' | 'analyst',
+        created_at: user.created_at
+      }));
+      
+      setUsers(typedUsers);
+      setFilteredUsers(typedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({

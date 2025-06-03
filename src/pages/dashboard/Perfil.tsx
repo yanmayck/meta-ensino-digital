@@ -1,3 +1,4 @@
+
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ const Perfil = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
-    nome: user?.nome || "João Silva",
+    nome: user?.email?.split('@')[0] || "João Silva",
     email: user?.email || "joao.silva@email.com",
     telefone: "(11) 99999-9999",
     endereco: "Rua das Flores, 123",
@@ -50,7 +51,7 @@ const Perfil = () => {
   const handleCancel = () => {
     // Reverter mudanças
     setFormData({
-      nome: user?.nome || "João Silva",
+      nome: user?.email?.split('@')[0] || "João Silva",
       email: user?.email || "joao.silva@email.com",
       telefone: "(11) 99999-9999",
       endereco: "Rua das Flores, 123",

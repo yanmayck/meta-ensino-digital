@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,7 +50,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               .single();
             
             if (data) {
-              setUserData(data);
+              setUserData({
+                id: data.id,
+                email: data.email,
+                role: data.role as 'user' | 'admin' | 'analyst',
+                created_at: data.created_at
+              });
               
               // Redirect based on role after login
               if (event === 'SIGNED_IN') {
@@ -84,7 +88,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .eq('id', session.user.id)
           .single()
           .then(({ data }) => {
-            if (data) setUserData(data);
+            if (data) {
+              setUserData({
+                id: data.id,
+                email: data.email,
+                role: data.role as 'user' | 'admin' | 'analyst',
+                created_at: data.created_at
+              });
+            }
             setIsLoading(false);
           });
       } else {

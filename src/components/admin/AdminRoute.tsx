@@ -22,7 +22,7 @@ const AdminRoute = ({ children, allowedRoles = ['admin', 'analyst'] }: AdminRout
     return <Navigate to="/login" replace />;
   }
 
-  if (!userData || !allowedRoles.includes(userData.role)) {
+  if (!userData || !allowedRoles.includes(userData.role as 'admin' | 'analyst')) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

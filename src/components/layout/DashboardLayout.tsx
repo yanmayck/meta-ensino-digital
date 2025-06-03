@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
@@ -78,12 +79,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <div className="flex items-center">
               <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
                 <span className="text-white font-semibold">
-                  {user?.nome?.charAt(0).toUpperCase() || 'U'}
+                  {user?.email?.charAt(0).toUpperCase() || 'U'}
                 </span>
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-700">
-                  {user?.nome || 'Usuário'}
+                  {user?.email?.split('@')[0] || 'Usuário'}
                 </p>
                 <p className="text-xs text-gray-500">
                   {user?.email || 'email@exemplo.com'}
