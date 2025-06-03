@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import AdminRoute from "@/components/admin/AdminRoute";
 import Index from "./pages/Index";
 import Sobre from "./pages/Sobre";
 import ComoFunciona from "./pages/ComoFunciona";
@@ -21,6 +22,8 @@ import Notas from "./pages/dashboard/Notas";
 import Pagamentos from "./pages/dashboard/Pagamentos";
 import Perfil from "./pages/dashboard/Perfil";
 import Configuracoes from "./pages/dashboard/Configuracoes";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserManagement from "./pages/admin/UserManagement";
 import NotFound from "./pages/NotFound";
 import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
@@ -78,6 +81,18 @@ const App = () => (
               <ProtectedRoute>
                 <Configuracoes />
               </ProtectedRoute>
+            } />
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            } />
+            <Route path="/admin/users" element={
+              <AdminRoute allowedRoles={['admin']}>
+                <UserManagement />
+              </AdminRoute>
             } />
             
             {/* Legal pages */}
