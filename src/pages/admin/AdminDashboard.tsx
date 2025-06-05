@@ -25,29 +25,29 @@ const AdminDashboard = () => {
     try {
       // Fetch total users
       const { count: totalUsers } = await supabase
-        .from('users')
+        .from('users' as any)
         .select('*', { count: 'exact', head: true });
 
       // Fetch active courses
       const { count: activeCourses } = await supabase
-        .from('courses')
+        .from('courses' as any)
         .select('*', { count: 'exact', head: true });
 
       // Fetch open tickets
       const { count: openTickets } = await supabase
-        .from('support_tickets')
+        .from('support_tickets' as any)
         .select('*', { count: 'exact', head: true })
         .eq('status', 'open');
 
       // Fetch user registrations by day (last 7 days)
       const { data: registrations } = await supabase
-        .from('users')
+        .from('users' as any)
         .select('created_at')
         .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
 
       // Process registrations by day
       const registrationsByDay: { [key: string]: number } = {};
-      registrations?.forEach(user => {
+      registrations?.forEach((user: any) => {
         const date = new Date(user.created_at).toLocaleDateString();
         registrationsByDay[date] = (registrationsByDay[date] || 0) + 1;
       });

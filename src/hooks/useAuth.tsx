@@ -1,3 +1,4 @@
+
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,7 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Fetch user data from our users table
           setTimeout(async () => {
             const { data } = await supabase
-              .from('users')
+              .from('users' as any)
               .select('*')
               .eq('id', session.user.id)
               .single();
@@ -83,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (session?.user) {
         // Fetch user data
         supabase
-          .from('users')
+          .from('users' as any)
           .select('*')
           .eq('id', session.user.id)
           .single()

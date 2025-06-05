@@ -29,13 +29,13 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       const { data, error } = await supabase
-        .from('users')
+        .from('users' as any)
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      const typedUsers = (data || []).map(user => ({
+      const typedUsers = (data || []).map((user: any) => ({
         id: user.id,
         email: user.email,
         role: user.role as 'user' | 'admin' | 'analyst',
@@ -77,8 +77,8 @@ const UserManagement = () => {
 
     try {
       const { error } = await supabase
-        .from('users')
-        .update({ role: newRole })
+        .from('users' as any)
+        .update({ role: newRole } as any)
         .eq('id', editingUser.id);
 
       if (error) throw error;
