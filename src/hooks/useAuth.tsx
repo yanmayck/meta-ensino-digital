@@ -44,23 +44,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (session?.user) {
           // Fetch user data from our users table
           setTimeout(async () => {
-            const { data } = await supabase
-              .from('users' as any)
+            const { data, error } = await supabase
+              .from('users')
               .select('*')
               .eq('id', session.user.id)
               .single();
             
-            if (data) {
+            if (data && !error) {
+              const typedData = data as any;
               setUserData({
-                id: data.id,
-                email: data.email,
-                role: data.role as 'user' | 'admin' | 'analyst',
-                created_at: data.created_at
+                id: typedData.id,
+                email: typedData.email,
+                role: typedData.role as 'user' | 'admin' | 'analyst',
+                created_at: typedData.created_at
               });
               
               // Redirect based on role after login
               if (event === 'SIGNED_IN') {
-                if (data.role === 'admin' || data.role === 'analyst') {
+                if (typedData.role === 'admin' || typedData.role === 'analyst') {
                   navigate('/admin');
                 } else {
                   navigate('/dashboard');
@@ -84,17 +85,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (session?.user) {
         // Fetch user data
         supabase
-          .from('users' as any)
+          .from('users')
           .select('*')
           .eq('id', session.user.id)
           .single()
-          .then(({ data }) => {
-            if (data) {
+          .then(({ data, error }) => {
+            if (data && !error) {
+              const typedData = data as any;
               setUserData({
-                id: data.id,
-                email: data.email,
-                role: data.role as 'user' | 'admin' | 'analyst',
-                created_at: data.created_at
+                id: typedData.id,
+                email: typedData.email,
+                role: typedData.role as 'user' | 'admin' | 'analyst',
+                created_at: typedData.created_at
               });
             }
             setIsLoading(false);
