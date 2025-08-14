@@ -98,7 +98,9 @@ export class MemStorage implements IStorage {
       created_at: now,
       updated_at: now,
       role: insertUser.role || "user",
-      nome: insertUser.nome || null
+      nome: insertUser.nome || null,
+      is_active: insertUser.is_active ?? true,
+      avatar_url: insertUser.avatar_url || null
     };
     this.users.set(id, user);
     return user;
@@ -148,7 +150,12 @@ export class MemStorage implements IStorage {
       instructor: insertCourse.instructor || null,
       duration: insertCourse.duration || null,
       price: insertCourse.price || null,
-      status: insertCourse.status || 'active'
+      status: insertCourse.status || 'active',
+      thumbnail_url: insertCourse.thumbnail_url || null,
+      category: insertCourse.category || null,
+      difficulty_level: insertCourse.difficulty_level || 'beginner',
+      requirements: insertCourse.requirements || [],
+      learning_outcomes: insertCourse.learning_outcomes || []
     };
     this.courses.set(id, course);
     return course;
@@ -238,6 +245,8 @@ export class MemStorage implements IStorage {
       id,
       created_at: now,
       updated_at: now,
+      description: moduleData.description || null,
+      is_active: moduleData.is_active ?? true
     };
     return module;
   }
@@ -259,6 +268,11 @@ export class MemStorage implements IStorage {
       id,
       created_at: now,
       updated_at: now,
+      description: lessonData.description || null,
+      content: lessonData.content || null,
+      video_url: lessonData.video_url || null,
+      duration_minutes: lessonData.duration_minutes || null,
+      is_free: lessonData.is_free ?? false
     };
     return lesson;
   }
@@ -280,6 +294,10 @@ export class MemStorage implements IStorage {
       id,
       created_at: now,
       updated_at: now,
+      course_id: materialData.course_id || null,
+      lesson_id: materialData.lesson_id || null,
+      file_size: materialData.file_size || null,
+      is_downloadable: materialData.is_downloadable ?? true
     };
     return material;
   }
