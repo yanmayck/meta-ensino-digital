@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Router, Route, Switch } from "wouter";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AdminRoute from "@/components/admin/AdminRoute";
@@ -38,75 +38,74 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <Router>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/sobre" element={<Sobre />} />
-            <Route path="/como-funciona" element={<ComoFunciona />} />
-            <Route path="/curriculo" element={<Curriculo />} />
-            <Route path="/depoimentos" element={<Depoimentos />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/contato" element={<Contato />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/cadastro" element={<Cadastro />} />
+          <Switch>
+            <Route path="/" component={Index} />
+            <Route path="/sobre" component={Sobre} />
+            <Route path="/como-funciona" component={ComoFunciona} />
+            <Route path="/curriculo" component={Curriculo} />
+            <Route path="/depoimentos" component={Depoimentos} />
+            <Route path="/faq" component={FAQ} />
+            <Route path="/contato" component={Contato} />
+            <Route path="/login" component={Login} />
+            <Route path="/cadastro" component={Cadastro} />
             
             {/* Protected Dashboard Routes */}
-            <Route path="/dashboard" element={
+            <Route path="/dashboard">
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
-            } />
-            <Route path="/dashboard/cursos" element={
+            </Route>
+            <Route path="/dashboard/cursos">
               <ProtectedRoute>
                 <Cursos />
               </ProtectedRoute>
-            } />
-            <Route path="/dashboard/notas" element={
+            </Route>
+            <Route path="/dashboard/notas">
               <ProtectedRoute>
                 <Notas />
               </ProtectedRoute>
-            } />
-            <Route path="/dashboard/pagamentos" element={
+            </Route>
+            <Route path="/dashboard/pagamentos">
               <ProtectedRoute>
                 <Pagamentos />
               </ProtectedRoute>
-            } />
-            <Route path="/dashboard/perfil" element={
+            </Route>
+            <Route path="/dashboard/perfil">
               <ProtectedRoute>
                 <Perfil />
               </ProtectedRoute>
-            } />
-            <Route path="/dashboard/configuracoes" element={
+            </Route>
+            <Route path="/dashboard/configuracoes">
               <ProtectedRoute>
                 <Configuracoes />
               </ProtectedRoute>
-            } />
+            </Route>
             
             {/* Admin Routes */}
-            <Route path="/admin" element={
+            <Route path="/admin">
               <AdminRoute>
                 <AdminDashboard />
               </AdminRoute>
-            } />
-            <Route path="/admin/users" element={
+            </Route>
+            <Route path="/admin/users">
               <AdminRoute allowedRoles={['admin']}>
                 <UserManagement />
               </AdminRoute>
-            } />
+            </Route>
             
             {/* Legal pages */}
-            <Route path="/termos" element={<Termos />} />
-            <Route path="/privacidade" element={<Privacidade />} />
-            <Route path="/cookies" element={<Cookies />} />
-            <Route path="/credenciamento" element={<Credenciamento />} />
-            <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+            <Route path="/termos" component={Termos} />
+            <Route path="/privacidade" component={Privacidade} />
+            <Route path="/cookies" component={Cookies} />
+            <Route path="/credenciamento" component={Credenciamento} />
+            <Route path="/esqueci-senha" component={EsqueciSenha} />
             
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+            <Route component={NotFound} />
+          </Switch>
         </AuthProvider>
-      </BrowserRouter>
+      </Router>
     </TooltipProvider>
   </QueryClientProvider>
 );

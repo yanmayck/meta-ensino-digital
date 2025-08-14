@@ -1,26 +1,19 @@
-
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { User, Session } from '@supabase/supabase-js';
+import { useLocation } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
 
 interface UserData {
   id: string;
   email: string;
+  nome?: string | null;
   role: 'user' | 'admin' | 'analyst';
-  created_at: string;
 }
 
 interface AuthContextType {
-  user: User | null;
-  userData: UserData | null;
-  session: Session | null;
-  login: (email: string, password: string) => Promise<{ error?: any }>;
-  signUp: (email: string, password: string) => Promise<{ error?: any }>;
+  user: UserData | null;
+  login: (email: string) => Promise<{ error?: any }>;
+  signUp: (email: string, nome?: string) => Promise<{ error?: any }>;
   logout: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error?: any }>;
-  loginWithGoogle: () => Promise<{ error?: any }>;
-  loginWithFacebook: () => Promise<{ error?: any }>;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
@@ -28,154 +21,108 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Fetch user data from our users table
-          setTimeout(async () => {
-            const { data, error } = await supabase
-              .from('users')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-            
-            if (data && !error) {
-              const typedData = data as any;
-              setUserData({
-                id: typedData.id,
-                email: typedData.email,
-                role: typedData.role as 'user' | 'admin' | 'analyst',
-                created_at: typedData.created_at
-              });
-              
-              // Redirect based on role after login
-              if (event === 'SIGNED_IN') {
-                if (typedData.role === 'admin' || typedData.role === 'analyst') {
-                  navigate('/admin');
-                } else {
-                  navigate('/dashboard');
-                }
-              }
-            }
-          }, 0);
-        } else {
-          setUserData(null);
-        }
-        
-        setIsLoading(false);
-      }
-    );
+    // Check if user is logged in from localStorage
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+    setIsLoading(false);
+  }, []);
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+  const login = async (email: string): Promise<{ error?: any }> => {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { error: data.error };
+      }
+
+      setUser(data.user);
+      localStorage.setItem('user', JSON.stringify(data.user));
       
-      if (session?.user) {
-        // Fetch user data
-        supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
-          .then(({ data, error }) => {
-            if (data && !error) {
-              const typedData = data as any;
-              setUserData({
-                id: typedData.id,
-                email: typedData.email,
-                role: typedData.role as 'user' | 'admin' | 'analyst',
-                created_at: typedData.created_at
-              });
-            }
-            setIsLoading(false);
-          });
+      // Redirect based on role
+      if (data.user.role === 'admin' || data.user.role === 'analyst') {
+        setLocation('/admin');
       } else {
-        setIsLoading(false);
+        setLocation('/dashboard');
       }
-    });
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+      toast({
+        title: "Login realizado com sucesso!",
+        description: "Bem-vindo ao sistema.",
+      });
 
-  const login = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    return { error };
+      return {};
+    } catch (error) {
+      console.error('Login error:', error);
+      return { error: 'Erro interno do servidor' };
+    }
   };
 
-  const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl
+  const signUp = async (email: string, nome?: string): Promise<{ error?: any }> => {
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, nome }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { error: data.error };
       }
-    });
-    return { error };
+
+      setUser(data.user);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      toast({
+        title: "Cadastro realizado com sucesso!",
+        description: "Sua conta foi criada.",
+      });
+
+      setLocation('/dashboard');
+
+      return {};
+    } catch (error) {
+      console.error('Sign up error:', error);
+      return { error: 'Erro interno do servidor' };
+    }
   };
 
-  const logout = async () => {
-    await supabase.auth.signOut();
+  const logout = async (): Promise<void> => {
     setUser(null);
-    setUserData(null);
-    setSession(null);
-    navigate('/');
-  };
-
-  const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`
+    localStorage.removeItem('user');
+    setLocation('/');
+    
+    toast({
+      title: "Logout realizado",
+      description: "Você foi desconectado com sucesso.",
     });
-    return { error };
-  };
-
-  const loginWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`
-      }
-    });
-    return { error };
-  };
-
-  const loginWithFacebook = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'facebook',
-      options: {
-        redirectTo: `${window.location.origin}/`
-      }
-    });
-    return { error };
   };
 
   const value = {
     user,
-    userData,
-    session,
     login,
     signUp,
     logout,
-    resetPassword,
-    loginWithGoogle,
-    loginWithFacebook,
-    isAuthenticated: !!session,
+    isAuthenticated: !!user,
     isLoading
   };
 

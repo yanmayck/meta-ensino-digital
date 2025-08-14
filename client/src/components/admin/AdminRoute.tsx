@@ -1,6 +1,6 @@
 
 import { useAuth } from '@/hooks/useAuth';
-import { Navigate } from 'react-router-dom';
+import { Redirect } from 'wouter';
 
 interface AdminRouteProps {
   children: React.ReactNode;
@@ -19,7 +19,7 @@ const AdminRoute = ({ children, allowedRoles = ['admin', 'analyst'] }: AdminRout
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Redirect to="/login" />;
   }
 
   if (!userData || !allowedRoles.includes(userData.role as 'admin' | 'analyst')) {

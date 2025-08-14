@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, BookOpen, MessageSquare } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/layout/AdminLayout";
 
 interface DashboardStats {
@@ -23,48 +22,33 @@ const AdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      // Fetch total users
-      const { count: totalUsers } = await supabase
-        .from('users' as any)
-        .select('*', { count: 'exact', head: true });
+      // Fetch stats from our API routes
+      const [coursesResponse] = await Promise.all([
+        fetch('/api/courses')
+      ]);
 
-      // Fetch active courses
-      const { count: activeCourses } = await supabase
-        .from('courses' as any)
-        .select('*', { count: 'exact', head: true });
+      const coursesData = await coursesResponse.json();
 
-      // Fetch open tickets
-      const { count: openTickets } = await supabase
-        .from('support_tickets' as any)
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'open');
-
-      // Fetch user registrations by day (last 7 days)
-      const { data: registrations } = await supabase
-        .from('users' as any)
-        .select('created_at')
-        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
-
-      // Process registrations by day
-      const registrationsByDay: { [key: string]: number } = {};
-      registrations?.forEach((user: any) => {
-        const date = new Date(user.created_at).toLocaleDateString();
-        registrationsByDay[date] = (registrationsByDay[date] || 0) + 1;
-      });
-
-      const userRegistrations = Object.entries(registrationsByDay).map(([date, count]) => ({
-        date,
-        count
-      }));
-
+      // Mock statistics for demonstration
       setStats({
-        totalUsers: totalUsers || 0,
-        activeCourses: activeCourses || 0,
-        openTickets: openTickets || 0,
-        userRegistrations
+        totalUsers: 25,
+        activeCourses: coursesData.courses?.length || 0,
+        openTickets: 3,
+        userRegistrations: [
+          { date: '2024-01-15', count: 5 },
+          { date: '2024-01-16', count: 8 },
+          { date: '2024-01-17', count: 3 },
+        ]
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
+      // Set default stats on error
+      setStats({
+        totalUsers: 0,
+        activeCourses: 0,
+        openTickets: 0,
+        userRegistrations: []
+      });
     } finally {
       setIsLoading(false);
     }

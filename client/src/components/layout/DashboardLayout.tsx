@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "wouter";
 import { 
   Home, 
   BookOpen, 
@@ -22,7 +22,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
+  const [location] = useLocation();
   const { user, logout } = useAuth();
 
   const menuItems = [
@@ -34,7 +34,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   ];
 
   const isActiveRoute = (path: string) => {
-    return location.pathname === path;
+    return location === path;
   };
 
   const handleLogout = () => {

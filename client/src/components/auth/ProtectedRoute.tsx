@@ -1,6 +1,6 @@
 
 import { useAuth } from '@/hooks/useAuth';
-import { Navigate, useLocation } from 'react-router-dom';
+import { useLocation, Redirect } from 'wouter';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
+  const [location] = useLocation();
 
   if (isLoading) {
     return (
@@ -19,8 +19,8 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   if (!isAuthenticated) {
-    // Redirecionar para login, salvando a localização atual
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Redirecionar para login
+    return <Redirect to="/login" />;
   }
 
   return <>{children}</>;

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "wouter";
 import { 
   BarChart3, 
   Users, 
@@ -19,7 +19,7 @@ interface AdminLayoutProps {
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
+  const [location] = useLocation();
   const { userData, logout } = useAuth();
 
   const menuItems = [
@@ -34,7 +34,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   );
 
   const isActiveRoute = (path: string) => {
-    return location.pathname === path;
+    return location === path;
   };
 
   const handleLogout = () => {
