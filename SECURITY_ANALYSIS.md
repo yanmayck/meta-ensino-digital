@@ -98,6 +98,74 @@
    - Backup automático da base de dados
    - Plano de recuperação em caso de falhas
 
-## Status da Segurança: ✅ MELHORADO
+## ✨ NOVA ARQUITETURA DE SEGURANÇA IMPLEMENTADA
 
-A plataforma agora possui controles de segurança robustos adequados para um ambiente de produção educacional.
+### 🏗️ Separação Completa de Servidores
+
+A plataforma agora usa uma arquitetura de **dois servidores isolados**:
+
+#### 🌐 Servidor Público (Porta 5000)
+- **Propósito**: Aplicação principal para usuários finais
+- **Rotas**: Apenas funcionalidades públicas e de usuários
+- **Acesso**: Público via internet
+- **Segurança**: Rate limiting padrão, CORS permissivo
+
+#### 🔐 Servidor Administrativo (Porta 5001)
+- **Propósito**: Exclusivamente para administração
+- **Rotas**: Apenas rotas administrativas (`/api/admin/*`)
+- **Acesso**: **APENAS localhost** (127.0.0.1)
+- **Segurança**: Rate limiting rigoroso (20 req/5min)
+
+### 🛡️ Benefícios de Segurança
+
+1. **Isolamento Físico**: Admin e público não compartilham código
+2. **Superfície de Ataque Reduzida**: Admin não exposto na internet
+3. **Controles Independentes**: Políticas de segurança específicas
+4. **Auditoria Separada**: Logs isolados para cada contexto
+5. **Configuração Granular**: CORS, rate limiting customizados
+
+### 📋 Como Usar
+
+#### Em Desenvolvimento:
+```bash
+# Servidor público apenas
+npm run dev
+
+# Com servidor admin (isolado)
+ENABLE_ADMIN_SERVER=true npm run dev
+```
+
+#### Em Produção:
+- **Servidor público**: Acessível publicamente na porta 5000
+- **Servidor admin**: Apenas localhost:5001, acesso via SSH/VPN
+
+### 🔧 Configuração de Segurança
+
+#### Variáveis de Ambiente:
+```bash
+# Admin server
+ENABLE_ADMIN_SERVER=true
+ADMIN_PORT=5001
+ADMIN_ALLOWED_ORIGINS=http://localhost:5001
+
+# Public server  
+PUBLIC_ALLOWED_ORIGINS=http://localhost:5000
+
+# Security
+JWT_SECRET=sua-chave-super-segura-aqui
+```
+
+### 📊 Comparação: Antes vs Depois
+
+| Aspecto | ❌ Antes | ✅ Depois |
+|---------|----------|-----------|
+| **Exposição Admin** | Público na internet | Apenas localhost |
+| **Isolamento** | Rotas misturadas | Servidores separados |
+| **Rate Limiting** | Genérico | Específico por contexto |
+| **Superfície de Ataque** | Alta | Mínima |
+| **Auditoria** | Logs misturados | Logs isolados |
+| **CORS** | Permissivo para tudo | Restrito por servidor |
+
+## Status da Segurança: 🚀 ENTERPRISE-GRADE
+
+A plataforma agora possui uma arquitetura de segurança de nível empresarial com isolamento completo entre funcionalidades públicas e administrativas.

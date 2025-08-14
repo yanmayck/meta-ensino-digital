@@ -22,9 +22,11 @@ Preferred communication style: Simple, everyday language.
 ### Backend Architecture
 - **Framework**: Express.js with TypeScript running on Node.js
 - **Database**: PostgreSQL with Drizzle ORM for type-safe database operations
-- **Connection**: Neon serverless database connection with connection pooling
-- **API Design**: RESTful API structure with organized route handlers
-- **Session Management**: In-memory storage with abstracted storage interface for future database integration
+- **Connection**: Local PostgreSQL database with connection pooling
+- **API Design**: Dual-server architecture with separated public and admin APIs
+- **Public Server (Port 5000)**: User-facing APIs with standard security measures
+- **Admin Server (Port 5001)**: Administrative APIs with enhanced security (localhost-only)
+- **Session Management**: JWT-based authentication with role-based access control
 - **Development**: Hot reload with Vite middleware integration
 
 ### Database Schema
@@ -87,12 +89,24 @@ The system uses three main entities:
     - **Protected Routes**: All admin routes properly secured with role-based access control
     - **File Security**: Upload directory protected with authentication requirements
     - **Input Validation**: Enhanced validation for user inputs and file uploads
+    - **Server Isolation** (August 14, 2025):
+      - **Dual Server Architecture**: Separated public (port 5000) and admin (port 5001) servers
+      - **Admin Server Isolation**: Administrative functions only accessible via localhost
+      - **Enhanced Security**: Stricter rate limiting (20 req/5min) and CORS policies for admin
+      - **Attack Surface Reduction**: Admin functionality completely isolated from public internet
+      - **Independent Security Policies**: Separate security controls for each server context
 
 ## Security Features
 - **JWT Token Authentication**: 7-day expiration with refresh capability
 - **Password Hashing**: BCrypt with 12 salt rounds
 - **Role-based Authorization**: Admin, analyst, and user role separation
-- **File Upload Validation**: Type checking and size limits for uploads
+- **File Upload Validation**: Type checking and size limits for uploads (50MB max)
 - **Protected Routes**: Authentication middleware for sensitive endpoints
+- **Server Isolation**: Administrative functions on separate localhost-only server
+- **Rate Limiting**: Public (100 req/15min), Auth (5 req/15min), Admin (20 req/5min)
+- **Security Headers**: Helmet.js with Content Security Policy
+- **CORS Protection**: Restricted origins for both public and admin servers
+- **Input Validation**: UUID format validation and field sanitization
+- **Audit Logging**: Separate logs for public and administrative actions
 
 The application is now ready for local VS Code development with comprehensive educational platform features including video uploads, course materials, and real-time progress tracking.

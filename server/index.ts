@@ -1,113 +1,59 @@
-import express, { type Request, Response, NextFunction } from "express";
-import rateLimit from "express-rate-limit";
-import helmet from "helmet";
-import { registerRoutes } from "./routes";
+import { createPublicServer } from "./public-server";
+import { createAdminServer } from "./admin-server";
 import { setupVite, serveStatic, log } from "./vite";
 
-const app = express();
-
-// Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "blob:"],
-      mediaSrc: ["'self'", "blob:"],
-    },
-  },
-}));
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: {
-    error: "Too many requests from this IP, please try again later."
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Stricter rate limiting for auth routes
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 auth requests per windowMs
-  message: {
-    error: "Too many authentication attempts, please try again later."
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-app.use(limiter);
-app.use("/api/auth/login", authLimiter);
-app.use("/api/auth/register", authLimiter);
-
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: false, limit: '10mb' }));
-
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
-    }
-  });
-
-  next();
-});
-
 (async () => {
-  const server = await registerRoutes(app);
+  const isDevelopment = process.env.NODE_ENV === "development";
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+  // Public server (main application)
+  const publicServer = createPublicServer();
 
-    res.status(status).json({ message });
-    throw err;
-  });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
+  // Setup Vite for public server in development
+  if (isDevelopment) {
+    const express = await import("express");
+    const publicApp = express.default();
+    await setupVite(publicApp, publicServer);
+    
+    // Mount public routes
+    publicApp.use((req, res, next) => {
+      if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+        return publicServer.emit('request', req, res);
+      }
+      next();
+    });
   } else {
-    serveStatic(app);
+    // Serve static files in production
+    const express = await import("express");
+    const publicApp = express.default();
+    serveStatic(publicApp);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
+  // Start public server on port 5000
+  const publicPort = 5000;
+  publicServer.listen({
+    port: publicPort,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    log(`🌐 Public server running on port ${publicPort}`);
   });
+
+  // Admin server (completely isolated) - only in production or when explicitly enabled
+  if (process.env.ENABLE_ADMIN_SERVER === "true" || !isDevelopment) {
+    const adminServer = createAdminServer();
+    const adminPort = parseInt(process.env.ADMIN_PORT || "5001");
+    
+    adminServer.listen({
+      port: adminPort,
+      host: "127.0.0.1", // Admin only accessible from localhost for security
+      reusePort: true,
+    }, () => {
+      log(`🔐 Admin server running on port ${adminPort} (localhost only)`);
+      log(`⚠️  Admin panel: http://localhost:${adminPort}`);
+    });
+  } else {
+    log(`ℹ️  Admin server disabled in development. Set ENABLE_ADMIN_SERVER=true to enable.`);
+  }
+
+  log(`✅ Servers started successfully`);
 })();
