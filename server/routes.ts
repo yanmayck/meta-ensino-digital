@@ -161,6 +161,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dashboard stats routes
+  app.get("/api/users/:userId/stats", async (req, res) => {
+    try {
+      const stats = await storage.getUserStats(req.params.userId);
+      res.json({ stats });
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/admin/stats", async (req, res) => {
+    try {
+      const stats = await storage.getAdminStats();
+      res.json({ stats });
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Enrollment routes
+  app.get("/api/users/:userId/enrollments", async (req, res) => {
+    try {
+      const enrollments = await storage.getUserEnrollments(req.params.userId);
+      res.json({ enrollments });
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/enrollments", async (req, res) => {
+    try {
+      const { userId, courseId } = req.body;
+      const enrollment = await storage.enrollUserInCourse(userId, courseId);
+      res.json({ enrollment });
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Assessment routes
+  app.get("/api/users/:userId/assessments", async (req, res) => {
+    try {
+      const assessments = await storage.getUserAssessments(req.params.userId);
+      res.json({ assessments });
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

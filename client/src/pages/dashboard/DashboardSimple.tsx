@@ -1,15 +1,12 @@
-
 import DashboardLayout from "@/components/layout/DashboardLayout";
-import { BookOpen, Clock, Trophy, Target, TrendingUp, CheckCircle } from "lucide-react";
+import { BookOpen, Clock, Trophy, Target, TrendingUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
 
 // Mock user ID - em produção, isso viria do contexto de autenticação
-const CURRENT_USER_ID = "user-123";
+// Usando um dos IDs reais do banco para testar
+const CURRENT_USER_ID = "00ddd7b8-7d40-43fa-a3b0-412075250224";
 
 const Dashboard = () => {
-  const [isLoading, setIsLoading] = useState(true);
-
   // Fetch user stats
   const { data: userStatsData, isLoading: statsLoading } = useQuery({
     queryKey: [`/api/users/${CURRENT_USER_ID}/stats`],
@@ -21,10 +18,6 @@ const Dashboard = () => {
     queryKey: [`/api/users/${CURRENT_USER_ID}/enrollments`],
     enabled: !!CURRENT_USER_ID,
   });
-
-  useEffect(() => {
-    setIsLoading(statsLoading || enrollmentsLoading);
-  }, [statsLoading, enrollmentsLoading]);
 
   const stats = userStatsData?.stats ? [
     {
@@ -53,7 +46,7 @@ const Dashboard = () => {
     },
     {
       title: "Nota Média",
-      value: userStatsData.stats.courses.averageGrade.toFixed(1),
+      value: userStatsData.stats.courses.averageGrade?.toFixed(1) || "0.0",
       subtitle: "nas avaliações",
       icon: TrendingUp,
       color: "text-orange-500",
@@ -70,9 +63,27 @@ const Dashboard = () => {
     prazo: "Verificar cronograma"
   })) || [];
 
-  const atividades = [
-    // Será populado com dados reais de avaliações pendentes
-  ];
+  if (statsLoading || enrollmentsLoading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-64 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-96"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white rounded-lg shadow p-6 animate-pulse">
+                <div className="h-12 bg-gray-200 rounded mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded w-20 mb-2"></div>
+                <div className="h-6 bg-gray-200 rounded w-16"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -80,7 +91,7 @@ const Dashboard = () => {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600">Bem-vindo de volta, João! Vamos continuar seus estudos.</p>
+          <p className="text-gray-600">Bem-vindo de volta! Vamos continuar seus estudos.</p>
         </div>
 
         {/* Stats Cards */}
@@ -108,8 +119,8 @@ const Dashboard = () => {
           ))}
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Cursos Ativos */}
+        {/* Cursos Ativos */}
+        {cursosAtivos.length > 0 && (
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -138,64 +149,7 @@ const Dashboard = () => {
               ))}
             </div>
           </div>
-
-          {/* Atividades Pendentes */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-                <CheckCircle className="w-5 h-5 mr-2 text-accent" />
-                Atividades Pendentes
-              </h2>
-            </div>
-            <div className="p-6 space-y-4">
-              {atividades.map((atividade, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center mb-1">
-                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full mr-2 ${
-                          atividade.tipo === 'Prova' ? 'bg-red-100 text-red-800' :
-                          atividade.tipo === 'Exercício' ? 'bg-blue-100 text-blue-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
-                          {atividade.tipo}
-                        </span>
-                        <span className="text-sm text-gray-500">{atividade.disciplina}</span>
-                      </div>
-                      <h3 className="font-medium text-gray-900 mb-1">{atividade.titulo}</h3>
-                      <p className="text-sm text-gray-600">Prazo: {atividade.prazo}</p>
-                    </div>
-                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                      atividade.status === 'pendente' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {atividade.status === 'pendente' ? 'Pendente' : 'Entregue'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors">
-              <BookOpen className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-600">Continuar Estudando</p>
-            </button>
-            <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors">
-              <Target className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-600">Ver Notas</p>
-            </button>
-            <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors">
-              <Clock className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-600">Cronograma</p>
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     </DashboardLayout>
   );

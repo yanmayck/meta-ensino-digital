@@ -16,7 +16,7 @@ import FAQ from "./pages/FAQ";
 import Contato from "./pages/Contato";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
-import Dashboard from "./pages/dashboard/Dashboard";
+import Dashboard from "./pages/dashboard/DashboardSimple";
 import Cursos from "./pages/dashboard/Cursos";
 import Notas from "./pages/dashboard/Notas";
 import Pagamentos from "./pages/dashboard/Pagamentos";
