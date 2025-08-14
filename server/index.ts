@@ -30,7 +30,7 @@ app.use(helmet({
   },
 }));
 
-// Rate limiting with proper trust proxy config
+// Rate limiting with simplified config for Replit
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
@@ -39,25 +39,19 @@ const limiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  trustProxy: 1,
-  keyGenerator: (req) => {
-    return req.ip || req.connection.remoteAddress || 'default';
-  }
+  skip: () => process.env.NODE_ENV === 'development' // Skip rate limiting in development
 });
 
 // Stricter rate limiting for auth routes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 auth requests per windowMs
+  max: 10, // Increased from 5 for better UX in development
   message: {
     error: "Too many authentication attempts, please try again later."
   },
   standardHeaders: true,
   legacyHeaders: false,
-  trustProxy: 1,
-  keyGenerator: (req) => {
-    return req.ip || req.connection.remoteAddress || 'default';
-  }
+  skip: () => process.env.NODE_ENV === 'development' // Skip rate limiting in development
 });
 
 app.use(limiter);
