@@ -2,7 +2,10 @@ import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 import { storage } from "../storage";
 
-const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-key-change-in-production";
+const JWT_SECRET = process.env.JWT_SECRET || (() => {
+  console.error("⚠️  WARNING: JWT_SECRET not set! Using fallback - NEVER use in production!");
+  return "fallback-secret-key-change-in-production";
+})();
 
 export interface AuthRequest extends Request {
   user?: {

@@ -45,7 +45,29 @@ router.get("/users", async (req, res) => {
 router.put("/users/:userId", requireAdmin as any, async (req: AuthRequest, res) => {
   try {
     const { userId } = req.params;
-    const updateData = req.body;
+    
+    // Validate UUID format
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+      return res.status(400).json({ error: "Invalid user ID format" });
+    }
+    
+    // Validate and sanitize update data
+    const allowedFields = ['nome', 'role', 'is_active', 'avatar_url'];
+    const updateData = Object.keys(req.body)
+      .filter(key => allowedFields.includes(key))
+      .reduce((obj: any, key) => {
+        obj[key] = req.body[key];
+        return obj;
+      }, {});
+    
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: "No valid fields to update" });
+    }
+    
+    // Prevent self-role change
+    if (updateData.role && req.user?.id === userId) {
+      return res.status(403).json({ error: "Cannot change your own role" });
+    }
     
     const user = await storage.updateUser(userId, updateData);
     
