@@ -13,6 +13,9 @@ import { createServer } from "http";
 
 const app = express();
 
+// Configure trust proxy for Replit environment
+app.set('trust proxy', true);
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: {
