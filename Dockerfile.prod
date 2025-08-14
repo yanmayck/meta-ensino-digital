@@ -1,0 +1,106 @@
+# Multi-stage Dockerfile para Produção
+
+# Stage 1: Build
+FROM node:18-alpine AS builder
+
+# Metadados
+LABEL maintainer="Meta Educação Team"
+LABEL version="2.0.0"
+LABEL description="Meta Educação - Build Stage"
+
+# Instalar dependências do sistema para build
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    git
+
+# Definir diretório de trabalho
+WORKDIR /app
+
+# Copiar arquivos de dependências
+COPY package*.json ./
+COPY tsconfig.json ./
+COPY vite.config.ts ./
+COPY tailwind.config.ts ./
+COPY postcss.config.js ./
+COPY components.json ./
+COPY drizzle.config.ts ./
+
+# Instalar dependências
+RUN npm ci --only=production && \
+    npm cache clean --force
+
+# Copiar código fonte
+COPY client/ ./client/
+COPY server/ ./server/
+COPY shared/ ./shared/
+
+# Build da aplicação
+RUN npm run build
+
+# Stage 2: Production
+FROM node:18-alpine AS production
+
+# Metadados
+LABEL maintainer="Meta Educação Team"
+LABEL version="2.0.0"
+LABEL description="Meta Educação - Production"
+
+# Instalar dependências do sistema
+RUN apk add --no-cache \
+    curl \
+    wget \
+    postgresql-client \
+    dumb-init
+
+# Criar usuário não-root
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S appuser -u 1001
+
+# Definir diretório de trabalho
+WORKDIR /app
+
+# Copiar dependências do stage de build
+COPY --from=builder --chown=appuser:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=appuser:nodejs /app/package*.json ./
+
+# Copiar aplicação buildada
+COPY --from=builder --chown=appuser:nodejs /app/server ./server
+COPY --from=builder --chown=appuser:nodejs /app/shared ./shared
+COPY --from=builder --chown=appuser:nodejs /app/client/dist ./client/dist
+
+# Copiar arquivos de configuração
+COPY --chown=appuser:nodejs tsconfig.json ./
+COPY --chown=appuser:nodejs drizzle.config.ts ./
+
+# Criar diretórios necessários
+RUN mkdir -p uploads/avatars uploads/videos uploads/materials uploads/thumbnails && \
+    mkdir -p logs && \
+    mkdir -p temp
+
+# Definir permissões
+RUN chown -R appuser:nodejs /app && \
+    chmod -R 755 /app/uploads && \
+    chmod -R 755 /app/logs
+
+# Mudar para usuário não-root
+USER appuser
+
+# Variáveis de ambiente
+ENV NODE_ENV=production
+ENV PORT=5000
+ENV ADMIN_PORT=5001
+
+# Expor portas
+EXPOSE 5000 5001
+
+# Health check
+HEALTHCHECK --interval=60s --timeout=15s --start-period=30s --retries=3 \
+    CMD wget --quiet --tries=1 --spider http://localhost:5000/api/courses || exit 1
+
+# Usar dumb-init para manejo correto de sinais
+ENTRYPOINT ["dumb-init", "--"]
+
+# Comando padrão
+CMD ["node", "server/index.js"]

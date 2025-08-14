@@ -1,0 +1,55 @@
+# Dockerfile para Desenvolvimento
+FROM node:18-alpine
+
+# Metadados
+LABEL maintainer="Meta Educação Team"
+LABEL version="2.0.0"
+LABEL description="Meta Educação - Desenvolvimento"
+
+# Instalar dependências do sistema
+RUN apk add --no-cache \
+    curl \
+    wget \
+    git \
+    bash \
+    postgresql-client
+
+# Criar usuário não-root
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nextjs -u 1001
+
+# Definir diretório de trabalho
+WORKDIR /app
+
+# Copiar arquivos de dependências
+COPY package*.json ./
+COPY tsconfig.json ./
+COPY vite.config.ts ./
+COPY tailwind.config.ts ./
+COPY postcss.config.js ./
+COPY components.json ./
+
+# Instalar dependências
+RUN npm ci --only=development && \
+    npm cache clean --force
+
+# Copiar código fonte
+COPY . .
+
+# Criar diretórios necessários
+RUN mkdir -p uploads/avatars uploads/videos uploads/materials uploads/thumbnails && \
+    mkdir -p logs
+
+# Definir permissões
+RUN chown -R nextjs:nodejs /app
+USER nextjs
+
+# Expor portas
+EXPOSE 5000 5001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:5000/api/courses || exit 1
+
+# Comando padrão
+CMD ["npm", "run", "dev"]

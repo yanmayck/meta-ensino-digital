@@ -1,0 +1,228 @@
+# Docker Compose para Produção
+# Execute: docker-compose -f docker-compose.prod.yml up -d
+
+version: '3.8'
+
+services:
+  # Banco de dados PostgreSQL (Produção)
+  postgres:
+    image: postgres:15-alpine
+    container_name: meta-educacao-db-prod
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-meta_educacao}
+      POSTGRES_USER: ${POSTGRES_USER:-meta_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: md5
+    ports:
+      - "127.0.0.1:5432:5432"  # Apenas localhost
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./database/backup:/backup
+    networks:
+      - meta-network-prod
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-meta_user} -d ${POSTGRES_DB:-meta_educacao}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # Aplicação principal (Produção)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      args:
+        NODE_ENV: production
+    container_name: meta-educacao-app-prod
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-meta_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-meta_educacao}"
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: ${POSTGRES_USER:-meta_user}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:-meta_educacao}
+      
+      # Application
+      NODE_ENV: production
+      PORT: 5000
+      ADMIN_PORT: 5001
+      ENABLE_ADMIN_SERVER: "true"
+      
+      # Security
+      JWT_SECRET: ${JWT_SECRET}
+      
+      # CORS
+      PUBLIC_ALLOWED_ORIGINS: ${PUBLIC_ALLOWED_ORIGINS:-"https://seu-dominio.com"}
+      ADMIN_ALLOWED_ORIGINS: "http://localhost:5001"
+      
+      # File Upload
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE:-52428800}
+      UPLOAD_PATH: "./uploads"
+      
+      # Performance
+      NODE_OPTIONS: "--max-old-space-size=2048"
+      
+    ports:
+      - "5000:5000"                    # Servidor público
+      - "127.0.0.1:5001:5001"         # Servidor admin (apenas localhost)
+    volumes:
+      - uploads_prod_data:/app/uploads
+      - logs_prod_data:/app/logs
+    networks:
+      - meta-network-prod
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/api/courses"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "10"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+
+  # Redis para cache (opcional, mas recomendado)
+  redis:
+    image: redis:7-alpine
+    container_name: meta-educacao-redis-prod
+    restart: always
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_prod_data:/data
+    networks:
+      - meta-network-prod
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Nginx como proxy reverso (opcional)
+  nginx:
+    image: nginx:1.24-alpine
+    container_name: meta-educacao-nginx-prod
+    restart: always
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - logs_nginx_prod:/var/log/nginx
+    networks:
+      - meta-network-prod
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # Backup automático do banco
+  backup:
+    image: postgres:15-alpine
+    container_name: meta-educacao-backup-prod
+    restart: "no"
+    depends_on:
+      - postgres
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: ${POSTGRES_USER:-meta_user}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:-meta_educacao}
+    volumes:
+      - ./database/backup:/backup
+      - ./scripts:/scripts
+    networks:
+      - meta-network-prod
+    command: /scripts/backup.sh
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Volumes para persistência de dados em produção
+volumes:
+  postgres_prod_data:
+    name: meta_educacao_postgres_prod
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/meta-educacao/postgres
+  
+  redis_prod_data:
+    name: meta_educacao_redis_prod
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/meta-educacao/redis
+  
+  uploads_prod_data:
+    name: meta_educacao_uploads_prod
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/meta-educacao/uploads
+  
+  logs_prod_data:
+    name: meta_educacao_logs_prod
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/meta-educacao/logs
+  
+  logs_nginx_prod:
+    name: meta_educacao_nginx_logs_prod
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/meta-educacao/nginx-logs
+
+# Rede isolada para produção
+networks:
+  meta-network-prod:
+    name: meta-educacao-network-prod
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
