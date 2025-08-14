@@ -1,4 +1,6 @@
 import { users, courses, support_tickets, type User, type InsertUser, type Course, type InsertCourse, type SupportTicket, type InsertSupportTicket } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -136,4 +138,79 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// DatabaseStorage implementation
+export class DatabaseStorage implements IStorage {
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async updateUser(id: string, updateData: Partial<User>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ ...updateData, updated_at: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    if (!user) throw new Error('User not found');
+    return user;
+  }
+
+  async getCourse(id: string): Promise<Course | undefined> {
+    const [course] = await db.select().from(courses).where(eq(courses.id, id));
+    return course || undefined;
+  }
+
+  async getAllCourses(): Promise<Course[]> {
+    return await db.select().from(courses);
+  }
+
+  async createCourse(insertCourse: InsertCourse): Promise<Course> {
+    const [course] = await db
+      .insert(courses)
+      .values(insertCourse)
+      .returning();
+    return course;
+  }
+
+  async getSupportTicket(id: string): Promise<SupportTicket | undefined> {
+    const [ticket] = await db.select().from(support_tickets).where(eq(support_tickets.id, id));
+    return ticket || undefined;
+  }
+
+  async getSupportTicketsByUserId(userId: string): Promise<SupportTicket[]> {
+    return await db.select().from(support_tickets).where(eq(support_tickets.user_id, userId));
+  }
+
+  async createSupportTicket(insertTicket: InsertSupportTicket): Promise<SupportTicket> {
+    const [ticket] = await db
+      .insert(support_tickets)
+      .values(insertTicket)
+      .returning();
+    return ticket;
+  }
+
+  async updateSupportTicket(id: string, updateData: Partial<SupportTicket>): Promise<SupportTicket> {
+    const [ticket] = await db
+      .update(support_tickets)
+      .set({ ...updateData, updated_at: new Date() })
+      .where(eq(support_tickets.id, id))
+      .returning();
+    if (!ticket) throw new Error('Support ticket not found');
+    return ticket;
+  }
+}
+
+export const storage = new DatabaseStorage();
