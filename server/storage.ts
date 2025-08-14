@@ -1,8 +1,11 @@
 import { 
   users, courses, support_tickets, enrollments, assessments, user_assessments, study_sessions,
+  course_modules, lessons, course_materials, user_lesson_progress,
   type User, type InsertUser, type Course, type InsertCourse, type SupportTicket, type InsertSupportTicket,
   type Enrollment, type InsertEnrollment, type Assessment, type InsertAssessment,
-  type UserAssessment, type InsertUserAssessment, type StudySession, type InsertStudySession
+  type UserAssessment, type InsertUserAssessment, type StudySession, type InsertStudySession,
+  type CourseModule, type InsertCourseModule, type Lesson, type InsertLesson,
+  type CourseMaterial, type InsertCourseMaterial, type UserLessonProgress, type InsertUserLessonProgress
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, avg, sum, count, and } from "drizzle-orm";
@@ -23,6 +26,24 @@ export interface IStorage {
   getCourse(id: string): Promise<Course | undefined>;
   getAllCourses(): Promise<Course[]>;
   createCourse(course: InsertCourse): Promise<Course>;
+  updateCourse(id: string, course: Partial<Course>): Promise<Course>;
+  
+  // Course module methods
+  createCourseModule(module: InsertCourseModule): Promise<CourseModule>;
+  getCourseModules(courseId: string): Promise<CourseModule[]>;
+  updateCourseModule(id: string, module: Partial<CourseModule>): Promise<CourseModule>;
+  
+  // Lesson methods
+  createLesson(lesson: InsertLesson): Promise<Lesson>;
+  getModuleLessons(moduleId: string): Promise<Lesson[]>;
+  updateLesson(id: string, lesson: Partial<Lesson>): Promise<Lesson>;
+  
+  // Course material methods
+  createCourseMaterial(material: InsertCourseMaterial): Promise<CourseMaterial>;
+  getLessonMaterials(lessonId: string): Promise<CourseMaterial[]>;
+  
+  // Analytics methods
+  getCourseAnalytics(courseId: string): Promise<any>;
   
   // Enrollment methods
   getUserEnrollments(userId: string): Promise<any[]>;
@@ -194,6 +215,90 @@ export class MemStorage implements IStorage {
     return [];
   }
 
+  // Course management - stub implementations for MemStorage
+  async updateCourse(id: string, updateData: Partial<Course>): Promise<Course> {
+    const course = this.courses.get(id);
+    if (!course) throw new Error('Course not found');
+    
+    const updatedCourse: Course = {
+      ...course,
+      ...updateData,
+      updated_at: new Date(),
+    };
+    this.courses.set(id, updatedCourse);
+    return updatedCourse;
+  }
+
+  // Course module methods - stub implementations for MemStorage
+  async createCourseModule(moduleData: InsertCourseModule): Promise<CourseModule> {
+    const id = crypto.randomUUID();
+    const now = new Date();
+    const module: CourseModule = {
+      ...moduleData,
+      id,
+      created_at: now,
+      updated_at: now,
+    };
+    return module;
+  }
+
+  async getCourseModules(courseId: string): Promise<CourseModule[]> {
+    return [];
+  }
+
+  async updateCourseModule(id: string, updateData: Partial<CourseModule>): Promise<CourseModule> {
+    throw new Error('Not implemented in MemStorage');
+  }
+
+  // Lesson methods - stub implementations for MemStorage
+  async createLesson(lessonData: InsertLesson): Promise<Lesson> {
+    const id = crypto.randomUUID();
+    const now = new Date();
+    const lesson: Lesson = {
+      ...lessonData,
+      id,
+      created_at: now,
+      updated_at: now,
+    };
+    return lesson;
+  }
+
+  async getModuleLessons(moduleId: string): Promise<Lesson[]> {
+    return [];
+  }
+
+  async updateLesson(id: string, updateData: Partial<Lesson>): Promise<Lesson> {
+    throw new Error('Not implemented in MemStorage');
+  }
+
+  // Course material methods - stub implementations for MemStorage
+  async createCourseMaterial(materialData: InsertCourseMaterial): Promise<CourseMaterial> {
+    const id = crypto.randomUUID();
+    const now = new Date();
+    const material: CourseMaterial = {
+      ...materialData,
+      id,
+      created_at: now,
+      updated_at: now,
+    };
+    return material;
+  }
+
+  async getLessonMaterials(lessonId: string): Promise<CourseMaterial[]> {
+    return [];
+  }
+
+  // Analytics methods - stub implementations for MemStorage
+  async getCourseAnalytics(courseId: string): Promise<any> {
+    return {
+      enrollments: 0,
+      completions: 0,
+      averageProgress: 0,
+      totalLessons: 0,
+      totalMaterials: 0
+    };
+  }
+
   async getSupportTicket(id: string): Promise<SupportTicket | undefined> {
     return this.supportTickets.get(id);
   }
@@ -320,6 +425,121 @@ export class DatabaseStorage implements IStorage {
       .returning();
     if (!ticket) throw new Error('Support ticket not found');
     return ticket;
+  }
+
+  // Course management methods
+  async updateCourse(id: string, updateData: Partial<Course>): Promise<Course> {
+    const [course] = await db
+      .update(courses)
+      .set({ ...updateData, updated_at: new Date() })
+      .where(eq(courses.id, id))
+      .returning();
+    if (!course) throw new Error('Course not found');
+    return course;
+  }
+
+  // Course module methods
+  async createCourseModule(moduleData: InsertCourseModule): Promise<CourseModule> {
+    const [module] = await db
+      .insert(course_modules)
+      .values(moduleData)
+      .returning();
+    return module;
+  }
+
+  async getCourseModules(courseId: string): Promise<CourseModule[]> {
+    return await db
+      .select()
+      .from(course_modules)
+      .where(eq(course_modules.course_id, courseId))
+      .orderBy(course_modules.order);
+  }
+
+  async updateCourseModule(id: string, updateData: Partial<CourseModule>): Promise<CourseModule> {
+    const [module] = await db
+      .update(course_modules)
+      .set({ ...updateData, updated_at: new Date() })
+      .where(eq(course_modules.id, id))
+      .returning();
+    if (!module) throw new Error('Module not found');
+    return module;
+  }
+
+  // Lesson methods
+  async createLesson(lessonData: InsertLesson): Promise<Lesson> {
+    const [lesson] = await db
+      .insert(lessons)
+      .values(lessonData)
+      .returning();
+    return lesson;
+  }
+
+  async getModuleLessons(moduleId: string): Promise<Lesson[]> {
+    return await db
+      .select()
+      .from(lessons)
+      .where(eq(lessons.module_id, moduleId))
+      .orderBy(lessons.order);
+  }
+
+  async updateLesson(id: string, updateData: Partial<Lesson>): Promise<Lesson> {
+    const [lesson] = await db
+      .update(lessons)
+      .set({ ...updateData, updated_at: new Date() })
+      .where(eq(lessons.id, id))
+      .returning();
+    if (!lesson) throw new Error('Lesson not found');
+    return lesson;
+  }
+
+  // Course material methods
+  async createCourseMaterial(materialData: InsertCourseMaterial): Promise<CourseMaterial> {
+    const [material] = await db
+      .insert(course_materials)
+      .values(materialData)
+      .returning();
+    return material;
+  }
+
+  async getLessonMaterials(lessonId: string): Promise<CourseMaterial[]> {
+    return await db
+      .select()
+      .from(course_materials)
+      .where(eq(course_materials.lesson_id, lessonId));
+  }
+
+  // Analytics methods
+  async getCourseAnalytics(courseId: string): Promise<any> {
+    // Get enrollment stats
+    const [enrollmentStats] = await db
+      .select({
+        total_enrollments: count(enrollments.id),
+        completed_enrollments: count(sql`CASE WHEN ${enrollments.status} = 'completed' THEN 1 END`),
+        avg_progress: avg(enrollments.progress_percentage),
+      })
+      .from(enrollments)
+      .where(eq(enrollments.course_id, courseId));
+
+    // Get module and lesson counts
+    const [contentStats] = await db
+      .select({
+        total_modules: count(course_modules.id),
+        total_lessons: count(lessons.id),
+        total_materials: count(course_materials.id),
+      })
+      .from(course_modules)
+      .leftJoin(lessons, eq(lessons.module_id, course_modules.id))
+      .leftJoin(course_materials, eq(course_materials.course_id, courseId))
+      .where(eq(course_modules.course_id, courseId));
+
+    return {
+      enrollments: enrollmentStats?.total_enrollments || 0,
+      completions: enrollmentStats?.completed_enrollments || 0,
+      averageProgress: Math.round(Number(enrollmentStats?.avg_progress) || 0),
+      totalModules: contentStats?.total_modules || 0,
+      totalLessons: contentStats?.total_lessons || 0,
+      totalMaterials: contentStats?.total_materials || 0,
+    };
   }
 
   // Enrollment methods

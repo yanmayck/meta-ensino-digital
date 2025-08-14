@@ -1,12 +1,69 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import path from "path";
+import express from "express";
 import { storage } from "./storage";
 import { insertUserSchema, insertCourseSchema, insertSupportTicketSchema } from "@shared/schema";
+import { authenticateToken } from "./middleware/auth";
+import authRoutes from "./routes/auth";
+import adminRoutes from "./routes/admin";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve uploaded files statically
+  app.use("/uploads", (req, res, next) => {
+    // Add authentication check for protected files if needed
+    next();
+  }, express.static(path.join(process.cwd(), "uploads")));
+
   // Authentication routes
-  app.post("/api/auth/register", async (req, res) => {
+  app.use("/api/auth", authRoutes);
+  
+  // Protected routes that require authentication
+  app.use("/api/auth/me", authenticateToken as any);
+  app.use("/api/auth/refresh", authenticateToken as any);
+  
+  // Admin routes (includes authentication middleware)
+  app.use("/api/admin", adminRoutes);
+
+  // Public course routes (no authentication required)
+  app.get("/api/courses", async (req, res) => {
+    try {
+      const courses = await storage.getAllCourses();
+      res.json({ courses });
+    } catch (error) {
+      console.error("Get courses error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/courses/:courseId", async (req, res) => {
+    try {
+      const { courseId } = req.params;
+      const course = await storage.getCourse(courseId);
+      if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+      
+      // Get course modules and lessons for public viewing
+      const modules = await storage.getCourseModules(courseId);
+      const courseWithModules = {
+        ...course,
+        modules: await Promise.all(modules.map(async (module) => ({
+          ...module,
+          lessons: await storage.getModuleLessons(module.id)
+        })))
+      };
+      
+      res.json({ course: courseWithModules });
+    } catch (error) {
+      console.error("Get course error:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Legacy authentication routes (keeping for backward compatibility)
+  app.post("/api/auth/register-legacy", async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
       const existingUser = await storage.getUserByEmail(userData.email);

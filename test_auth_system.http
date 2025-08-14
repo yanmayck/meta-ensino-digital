@@ -1,0 +1,82 @@
+# Meta Educação API Testing
+# Test file for JWT authentication and course management
+
+### 1. Register new user
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@metaeducacao.com",
+  "nome": "Administrator",
+  "password": "admin123456",
+  "role": "admin"
+}
+
+### 2. Login user
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@metaeducacao.com",
+  "password": "admin123456"
+}
+
+### 3. Get current user (needs token from login)
+GET http://localhost:5000/api/auth/me
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### 4. Admin - Create course
+POST http://localhost:5000/api/admin/courses
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "title": "Ensino Médio Completo - Matemática",
+  "description": "Curso completo de matemática para conclusão do ensino médio",
+  "instructor": "Prof. João Silva",
+  "duration": 120,
+  "price": "299.90",
+  "category": "Matemática",
+  "difficulty_level": "intermediate",
+  "requirements": ["Conhecimento básico de aritmética"],
+  "learning_outcomes": ["Álgebra avançada", "Geometria", "Trigonometria"]
+}
+
+### 5. Admin - Get all users
+GET http://localhost:5000/api/admin/users
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### 6. Admin - Create course module
+POST http://localhost:5000/api/admin/courses/COURSE_ID/modules
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "title": "Módulo 1: Álgebra Básica",
+  "description": "Introdução aos conceitos fundamentais de álgebra",
+  "order": 1
+}
+
+### 7. Admin - Create lesson
+POST http://localhost:5000/api/admin/modules/MODULE_ID/lessons
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "title": "Aula 1: Equações de Primeiro Grau",
+  "description": "Aprenda a resolver equações lineares",
+  "content": "<h1>Equações de Primeiro Grau</h1><p>Uma equação de primeiro grau...</p>",
+  "order": 1,
+  "duration_minutes": 45,
+  "is_free": true
+}
+
+### 8. Get all courses (public)
+GET http://localhost:5000/api/courses
+
+### 9. Get course with modules
+GET http://localhost:5000/api/courses/COURSE_ID
+
+### 10. Admin stats
+GET http://localhost:5000/api/admin/stats
+Authorization: Bearer YOUR_TOKEN_HERE
