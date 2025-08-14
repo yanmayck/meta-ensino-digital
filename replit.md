@@ -65,8 +65,18 @@ The system uses three main entities:
 - **Replit Integration**: Development environment integration with error handling and cartographer
 
 ### Third-party Services
-- **Supabase**: Alternative authentication provider (currently configured but not actively used)
 - **Form Validation**: Zod for runtime type checking and form validation
 - **Date Handling**: date-fns for consistent date manipulation across the application
+
+## Migration Notes
+- **Date**: January 14, 2025
+- **Migration**: Successfully migrated from Supabase to Neon PostgreSQL
+- **Changes Made**:
+  - Removed all Supabase client-side code and dependencies
+  - Implemented complete server-side API with Drizzle ORM and Neon database
+  - Added full CRUD operations for users, courses, and support tickets
+  - Updated UserManagement component to use server API instead of Supabase auth admin
+  - Database schema pushed successfully to production database
+  - All authentication and data operations now handled through secure server-side endpoints
 
 The application is designed to be scalable and maintainable with clear separation between presentation, business logic, and data layers.

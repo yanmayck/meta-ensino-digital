@@ -28,26 +28,13 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      // Mock data for demonstration - in a real app, this would be an API call
-      const mockUsers: User[] = [
-        {
-          id: '1',
-          email: 'admin@example.com',
-          nome: 'Admin User',
-          role: 'admin',
-          created_at: new Date().toISOString()
-        },
-        {
-          id: '2',
-          email: 'user@example.com',
-          nome: 'Regular User',
-          role: 'user',
-          created_at: new Date().toISOString()
-        }
-      ];
-      
-      setUsers(mockUsers);
-      setFilteredUsers(mockUsers);
+      const response = await fetch('/api/users');
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+      const data = await response.json();
+      setUsers(data.users);
+      setFilteredUsers(data.users);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -113,9 +100,13 @@ const UserManagement = () => {
     if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
 
     try {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE',
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Failed to delete user');
+      }
 
       toast({
         title: "Sucesso",

@@ -44,6 +44,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User routes
+  app.get("/api/users", async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json({ users: users.map(user => ({ id: user.id, email: user.email, nome: user.nome, role: user.role, created_at: user.created_at })) });
+    } catch (error) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   app.get("/api/users/:id", async (req, res) => {
     try {
       const user = await storage.getUser(req.params.id);
@@ -61,6 +70,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateData = req.body;
       const user = await storage.updateUser(req.params.id, updateData);
       res.json({ user: { id: user.id, email: user.email, nome: user.nome, role: user.role } });
+    } catch (error) {
+      if (error instanceof Error && error.message === 'User not found') {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/users/:id", async (req, res) => {
+    try {
+      await storage.deleteUser(req.params.id);
+      res.json({ message: "User deleted successfully" });
     } catch (error) {
       if (error instanceof Error && error.message === 'User not found') {
         return res.status(404).json({ error: "User not found" });

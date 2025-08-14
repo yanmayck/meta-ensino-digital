@@ -9,8 +9,10 @@ export interface IStorage {
   // User methods
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<User>): Promise<User>;
+  deleteUser(id: string): Promise<void>;
   
   // Course methods
   getCourse(id: string): Promise<Course | undefined>;
@@ -71,6 +73,17 @@ export class MemStorage implements IStorage {
     };
     this.users.set(id, updatedUser);
     return updatedUser;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    if (!this.users.has(id)) {
+      throw new Error('User not found');
+    }
+    this.users.delete(id);
   }
 
   async getCourse(id: string): Promise<Course | undefined> {
@@ -166,6 +179,20 @@ export class DatabaseStorage implements IStorage {
       .returning();
     if (!user) throw new Error('User not found');
     return user;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    const result = await db
+      .delete(users)
+      .where(eq(users.id, id))
+      .returning();
+    if (result.length === 0) {
+      throw new Error('User not found');
+    }
   }
 
   async getCourse(id: string): Promise<Course | undefined> {
