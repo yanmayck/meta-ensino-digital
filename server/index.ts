@@ -14,7 +14,7 @@ import { createServer } from "http";
 const app = express();
 
 // Configure trust proxy for Replit environment
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet({
@@ -30,7 +30,7 @@ app.use(helmet({
   },
 }));
 
-// Rate limiting
+// Rate limiting with proper trust proxy config
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
@@ -39,6 +39,10 @@ const limiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  trustProxy: 1,
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress || 'default';
+  }
 });
 
 // Stricter rate limiting for auth routes
@@ -50,6 +54,10 @@ const authLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  trustProxy: 1,
+  keyGenerator: (req) => {
+    return req.ip || req.connection.remoteAddress || 'default';
+  }
 });
 
 app.use(limiter);
