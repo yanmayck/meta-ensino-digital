@@ -234,9 +234,18 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
+  try {
+    if (app.get("env") === "development") {
+      console.log("Setting up Vite...");
+      await setupVite(app, server);
+      console.log("Vite setup completed");
+    } else {
+      serveStatic(app);
+    }
+  } catch (error) {
+    console.error("Error during Vite setup:", error);
+    // Fall back to serving static files
+    console.log("Falling back to static file serving...");
     serveStatic(app);
   }
 
@@ -254,15 +263,20 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     }
   });
   
-  const startServer = () => {
-    server.listen({
-      port,
-      host: "0.0.0.0",
-    }, () => {
-      log(`serving on port ${port}`);
-    });
-  };
-
-  // Add a small delay to ensure any previous instances have fully shut down
-  setTimeout(startServer, 100);
+  server.listen(port, "0.0.0.0", () => {
+    log(`serving on port ${port}`);
+    console.log(`Server is now accepting connections on 0.0.0.0:${port}`);
+    
+    // Test the server immediately after startup
+    setTimeout(async () => {
+      try {
+        const response = await fetch(`http://localhost:${port}/api/courses`);
+        console.log(`Self-test response: ${response.status}`);
+        const data = await response.json();
+        console.log(`Self-test data:`, data);
+      } catch (err: any) {
+        console.log(`Self-test failed: ${err.message}`);
+      }
+    }, 1000);
+  });
 })();
